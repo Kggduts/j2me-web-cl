@@ -596,7 +596,7 @@ async function doExportData() {
         alert("Error exporting data");
     }
 }
-\n
+
 function showStartupError(error) {
     const loading = document.getElementById("loading");
     if (!loading) return;
