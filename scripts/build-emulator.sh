@@ -35,6 +35,10 @@ else
 fi
 
 test -s "$UPSTREAM/web/freej2me-web.jar"
+if ! jar tf "$UPSTREAM/web/freej2me-web.jar" | grep -Fxq 'pl/zb3/freej2me/launcher/LauncherUtil.class'; then
+  echo "LauncherUtil.class is missing from freej2me-web.jar." >&2
+  exit 1
+fi
 bash "$ROOT/tools/run-gcf-adapter-tests.sh" "$UPSTREAM/web/freej2me-web.jar"
 
 # Build a real MIDlet probe against the pinned upstream Java ME API classes.
