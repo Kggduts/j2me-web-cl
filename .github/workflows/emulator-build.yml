@@ -3,12 +3,14 @@ name: Emulator build
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'public/**'
   pull_request:
     branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: emulator-build-${{ github.ref }}
@@ -70,3 +72,20 @@ jobs:
           path: dist/
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish static output for Cloudflare Pages
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          rm -rf public
+          mkdir -p public
+          cp -a dist/. public/
+          touch public/.nojekyll
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public
+          if git diff --cached --quiet; then
+            echo "Cloudflare Pages output is already up to date."
+          else
+            git commit -m "chore: publish Cloudflare Pages output"
+            git push origin HEAD:main
+          fi
