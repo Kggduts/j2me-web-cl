@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
-MIDlet-Name: J2ME GCF Network Probe
+MIDlet-Name: J2ME Compatibility Probes
 MIDlet-Version: 1.0.0
 MIDlet-Vendor: J2ME Cloud Player
 MIDlet-1: GCF Network Probe,,GcfNetworkProbe
+MIDlet-2: Core Compatibility Probe,,CoreCompatibilityProbe
 MicroEdition-Configuration: CLDC-1.1
 MicroEdition-Profile: MIDP-2.0
-
