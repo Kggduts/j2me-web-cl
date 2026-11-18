@@ -13,8 +13,10 @@ let state = {
 let defaultSettings = {};
 
 let startupStageTimer = null;
+let startupStage = "initializing";
 
 function setStartupStage(stage) {
+    startupStage = stage;
     const loading = document.getElementById("loading");
     if (loading) loading.textContent = "Loading: " + stage;
 
