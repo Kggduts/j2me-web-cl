@@ -113,13 +113,13 @@ public final class CoreCompatibilityProbe extends MIDlet implements CommandListe
             drawWrapped(g, status, 10, 140, w - 20);
         }
 
-        protected void keyPressed(int keyCode) {
+        public void keyPressed(int keyCode) {
             keyCount++;
             status = "Input received: keyCode=" + keyCode;
             repaint();
         }
 
-        protected void pointerPressed(int x, int y) {
+        public void pointerPressed(int x, int y) {
             pointerCount++;
             status = "Pointer received at " + x + "," + y;
             repaint();
