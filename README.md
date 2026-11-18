@@ -87,6 +87,8 @@ The emulator baseline is [zb3/freej2me-web](https://github.com/zb3/freej2me-web)
 
 ## Project links
 
+- [Product goals](docs/product-goals.md)
+- [Java ME compatibility inventory](docs/compatibility-inventory.md)
 - [Network compatibility design](docs/network-compatibility.md)
 - [Runtime evaluation](docs/runtime-evaluation.md)
 - [Security model](docs/security-model.md)
