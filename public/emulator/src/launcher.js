@@ -568,5 +568,26 @@ async function doExportData() {
         alert("Error exporting data");
     }
 }
+\n
+function showStartupError(error) {
+    const loading = document.getElementById("loading");
+    if (!loading) return;
 
-main();
+    const message = error && (error.stack || error.message)
+        ? (error.stack || error.message)
+        : String(error);
+
+    loading.style.display = "block";
+    loading.style.whiteSpace = "pre-wrap";
+    loading.style.overflow = "auto";
+    loading.style.alignItems = "flex-start";
+    loading.style.justifyContent = "flex-start";
+    loading.style.padding = "20px";
+    loading.style.boxSizing = "border-box";
+    loading.style.fontSize = "14px";
+    loading.style.color = "#8b1e1e";
+    loading.textContent = "J2ME Cloud Player failed to start\\n\\n" + message;
+    console.error("J2ME Cloud Player startup failed:", error);
+}
+
+main().catch(showStartupError);
