@@ -43,3 +43,18 @@ next signal before diagnosing a real game.
 For TCP/UDP in CheerpJ, use the emulator's interactive Tailscale sign-in link
 and a tailnet ACL that allows only the intended test destination. Never put a
 reusable Tailscale auth key in the public site.
+
+
+## Offline core compatibility probe
+
+The same JAR also contains a second MIDlet, **Core Compatibility Probe**.
+It exercises MIDlet start/pause/destroy callbacks, LCDUI Canvas drawing,
+key and pointer input, and a basic RMS create/add/read/update/close/reopen/read
+sequence. It is intentionally offline and does not require a Tailscale session
+or a reachable game server.
+
+A passing RMS result verifies only this sequence in the current browser runtime.
+It does not yet establish storage durability across browser restarts, private
+browsing, quota pressure, multiple game suites, or browser storage eviction.
+The probe currently uses a dedicated fixed RMS store name; keep its test data
+separate from real game saves.
