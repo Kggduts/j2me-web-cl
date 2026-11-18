@@ -17,12 +17,15 @@ test -s docs/network-compatibility.md
 test -s docs/runtime-evaluation.md
 test -s tools/java-probe/NetworkProbe.java
 test -s tools/java-me-probe/GcfNetworkProbe.java
+test -s tools/java-me-probe/CoreCompatibilityProbe.java
 test -s tools/java-me-probe/GcfAdapterSmokeTest.java
 test -s patches/src/javax/microedition/io/GcfNetwork.java
 test -s patches/src/javax/microedition/io/Connector.java
 test -s scripts/apply-upstream-patches.py
 grep -Fq 'run.html?app=' scripts/apply-upstream-patches.py
 grep -Fq '&mobile=1' scripts/apply-upstream-patches.py
+grep -Fq 'Test RMS' tools/java-me-probe/CoreCompatibilityProbe.java
+grep -Fq 'close/reopen/read' tools/java-me-probe/CoreCompatibilityProbe.java
 grep -Fq 'Testing TCP ' tools/java-me-probe/GcfNetworkProbe.java
 grep -Fq 'TCP ' tools/java-me-probe/GcfNetworkProbe.java
 grep -Fq 'UDP ' tools/java-me-probe/GcfNetworkProbe.java
