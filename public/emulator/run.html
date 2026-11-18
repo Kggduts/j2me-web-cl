@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>freej2me-web</title>
+</head>
+<style>
+    html, body {
+        height: 100%;
+    }
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: sans;
+    }
+    #screen-area {
+        background-color: #eee;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #display {
+        background-color: white;
+        zoom: 1;
+        image-rendering: pixelated; /* affects zoom */
+    }
+    #display:focus {
+        outline: none;
+    }
+    #loading {
+        font-size: 2em;
+    }
+
+    .keypad-part {
+        background-color: #222; /* Dark background for keypad areas */
+        padding: 8px;
+        display: flex; /* Use flex to center the grid */
+        justify-content: center;
+        align-items: center;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent; /* Disable tap highlight on mobile */
+    }
+
+    .key-grid {
+        display: grid;
+        gap: 6px; /* Space between keys */
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Grid definitions */
+    .left-grid {
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(5, 1fr);
+    }
+    .keypad-part, .key {
+        touch-action: none;
+    }
+    .backspace-key {
+        font-size: 1.25em;
+        background-color: #593b3b;
+    }
+
+    .right-grid {
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+    }
+
+    /* Individual Key Styles */
+    .key {
+        background-color: #3a3a3a; /* Dark key background */
+        color: #e0e0e0; /* Light key text */
+        border: 1px solid #555;
+        border-radius: 5px;
+        font-size: 1.5em; /* Larger text */
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column; /* Allow stacking number/letters */
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        user-select: none; /* Prevent text selection on click/drag */
+        transition: background-color 0.1s ease, transform 0.05s ease;
+        line-height: 1.1;
+    }
+    .key span { /* Style for secondary text like ABC */
+        font-size: 0.4em;
+        font-weight: normal;
+        margin-top: 2px;
+        color: #aaa;
+    }
+
+    .key.active {
+        background-color: #6a6a6a;
+        transform: scale(0.95); /* Slight shrink effect on press */
+    }
+
+    .arrow-key {
+        font-size: 2em; /* Make arrows bigger */
+    }
+
+    .ok-key {
+        font-size: 1.3em;
+    }
+
+    /* Styles for specifically smaller keys */
+    .small-key {
+        /* Instead of scaling the whole button, we control its size within the grid cell */
+        width: 70%;
+        height: 70%;
+        font-size: 0.9em;
+        align-self: end;   /* Center vertically in grid cell */
+        /* Ensure padding/border don't make it too big */
+        padding: 2px;
+        line-height: 1;
+    }
+
+    .small-key-left {
+        justify-self: left;
+    }
+
+    .small-key-right {
+        justify-self: right;
+    }
+
+
+    #left-keys,
+    #right-keys {
+        display: none;
+        position: absolute;
+        bottom: 0;
+    }
+
+    #left-keys {
+        left: 0;
+    }
+
+    #right-keys {
+        right: 0;
+    }
+
+    #screen-area {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    body.kbd-portrait #left-keys,
+    body.kbd-portrait #right-keys,
+    body.kbd-landscape #left-keys,
+    body.kbd-landscape #right-keys {
+        display: flex;
+    }
+
+    body.kbd-portrait #left-keys,
+    body.kbd-portrait #right-keys {
+        width: 50%;
+        height: 220px;
+    }
+
+    body.kbd-landscape #left-keys,
+    body.kbd-landscape #right-keys {
+        width: 220px;
+        height: 100%;
+    }
+
+    /* max height in landscape mode */
+    body.kbd-landscape #left-keys .key-grid,
+    body.kbd-landscape #right-keys .key-grid {
+        max-height: 400px;
+    }
+
+    body.kbd-portrait #screen-area {
+        bottom: 220px;
+    }
+
+    body.kbd-landscape #screen-area {
+        left: 220px;
+        right: 220px;
+    }
+
+</style>
+<body>
+    <!-- J2ME Cloud Player: optional private-network sign-in -->
+    <div id="network-tools" style="position:fixed;z-index:20;top:8px;left:8px;max-width:min(90vw,420px);font:13px sans-serif;background:rgba(255,255,255,.94);padding:7px 10px;border-radius:6px;box-shadow:0 1px 5px #0003">
+        <a id="tailscale-login" href="#" target="_blank" rel="noopener noreferrer" hidden>Sign in to enable TCP/UDP networking</a>
+        <span id="tailscale-status" aria-live="polite"></span>
+    </div>
+    <div id="screen-area">
+        <canvas tabindex="0" id="display" style="display: none;"></canvas>
+        <div id="loading">Loading...</div>
+    </div>
+    <div id="left-keys" class="keypad-part">
+        <div class="key-grid left-grid">
+            <button data-key="Digit1" class="key">1</button>
+            <button data-key="Digit2" class="key">2 <span>ABC</span></button>
+            <button data-key="Digit3" class="key">3 <span>DEF</span></button>
+            <button data-key="Digit4" class="key">4 <span>GHI</span></button>
+            <button data-key="Digit5" class="key">5 <span>JKL</span></button>
+            <button data-key="Digit6" class="key">6 <span>MNO</span></button>
+            <button data-key="Digit7" class="key">7 <span>PQRS</span></button>
+            <button data-key="Digit8" class="key">8 <span>TUV</span></button>
+            <button data-key="Digit9" class="key">9 <span>WXYZ</span></button>
+            <button data-key="NumpadAsterisk" class="key">*</button>
+            <button data-key="Digit0" class="key">0 <span>+</span></button>
+            <button data-key="NumpadDivide" class="key">#</button>
+            <button data-key="Backspace" class="key backspace-key" aria-label="Delete / Backspace">⌫<span>Xóa</span></button>
+        </div>
+    </div>
+    <div id="right-keys" class="keypad-part">
+         <div class="key-grid right-grid">
+            <button data-key="F1" class="key">L</button>
+            <button data-key="ArrowUp" class="key arrow-key" aria-label="Up">↑</button>
+            <button data-key="F2" class="key">R</button>
+            <button data-key="ArrowLeft" class="key arrow-key" aria-label="Left">←</button>
+            <button data-key="Enter" class="key ok-key">OK</button>
+            <button data-key="ArrowRight" class="key arrow-key" aria-label="Right">→</button>
+            <button data-key="Escape" class="key small-key small-key-left">Esc</button>
+            <button data-key="ArrowDown" class="key arrow-key" aria-label="Down">↓</button>
+            <button data-key="Maximize" class="key small-key small-key-right" aria-label="Maximize">⛶</button>
+        </div>
+    </div>
+    <script src="https://cjrtnc.leaningtech.com/20260317_2978/loader.js"></script>
+    <script type="module" src="src/main.js"></script>
+
+    <!-- J2ME Cloud Player: on-screen network diagnostics -->
+    <style>
+      #j2me-netlog-toggle{position:fixed;z-index:10020;right:10px;bottom:10px;border:0;border-radius:22px;padding:10px 14px;background:#173b67;color:#fff;font:600 14px sans-serif;box-shadow:0 2px 8px #0005}
+      #j2me-netlog-panel{position:fixed;z-index:10021;inset:auto 8px 58px 8px;max-height:55vh;background:#101820;color:#e8f0f7;border:1px solid #526273;border-radius:10px;padding:10px;font:13px sans-serif;box-shadow:0 3px 16px #0008}
+      #j2me-netlog-panel[hidden]{display:none}
+      #j2me-netlog-output{box-sizing:border-box;width:100%;height:30vh;resize:vertical;background:#080d12;color:#b9f6ca;border:1px solid #526273;border-radius:6px;padding:8px;font:11px monospace}
+      #j2me-netlog-panel button{border:0;border-radius:6px;padding:9px 12px;margin:6px 5px 0 0;background:#285b87;color:white;font-weight:600}
+      #j2me-netlog-panel .muted{color:#b7c4d0;font-size:12px}
+    </style>
+    <button id="j2me-netlog-toggle" type="button" aria-expanded="false">Network Log <span id="j2me-netlog-count">0</span></button>
+    <section id="j2me-netlog-panel" hidden aria-label="Network debug log">
+      <strong>Network Debug Log</strong>
+      <p class="muted">Chỉ lưu các dòng [J2ME-NET]. Không ghi nội dung gói tin hoặc mật khẩu.</p>
+      <textarea id="j2me-netlog-output" readonly spellcheck="false" placeholder="Chưa có log. Hãy mở game và thử kết nối lại."></textarea>
+      <div>
+        <button id="j2me-netlog-copy" type="button">Sao chép log</button>
+        <button id="j2me-netlog-clear" type="button">Xóa log</button>
+        <button id="j2me-netlog-close" type="button">Đóng</button>
+        <span id="j2me-netlog-status" class="muted" aria-live="polite"></span>
+      </div>
+    </section>
+    <script>
+    (() => {
+      const lines = [];
+      const limit = 400;
+      const output = document.getElementById('j2me-netlog-output');
+      const count = document.getElementById('j2me-netlog-count');
+      const panel = document.getElementById('j2me-netlog-panel');
+      const toggle = document.getElementById('j2me-netlog-toggle');
+      const status = document.getElementById('j2me-netlog-status');
+      const original = {
+        log: console.log.bind(console),
+        warn: console.warn.bind(console),
+        error: console.error.bind(console)
+      };
+      function stringify(value) {
+        if (typeof value === 'string') return value;
+        try { return JSON.stringify(value); } catch (_) { return String(value); }
+      }
+      function capture(args) {
+        const line = Array.from(args, stringify).join(' ');
+        if (!line.includes('[J2ME-NET]')) return;
+        lines.push(line.slice(0, 1200));
+        if (lines.length > limit) lines.shift();
+        output.value = lines.join('\n');
+        count.textContent = String(lines.length);
+        if (!panel.hidden) output.scrollTop = output.scrollHeight;
+      }
+      ['log', 'warn', 'error'].forEach(level => {
+        console[level] = (...args) => {
+          capture(args);
+          original[level](...args);
+        };
+      });
+      function setOpen(open) {
+        panel.hidden = !open;
+        toggle.setAttribute('aria-expanded', String(open));
+        if (open) output.scrollTop = output.scrollHeight;
+      }
+      toggle.addEventListener('click', () => setOpen(panel.hidden));
+      document.getElementById('j2me-netlog-close').addEventListener('click', () => setOpen(false));
+      document.getElementById('j2me-netlog-clear').addEventListener('click', () => {
+        lines.length = 0; output.value = ''; count.textContent = '0'; status.textContent = 'Đã xóa.';
+      });
+      document.getElementById('j2me-netlog-copy').addEventListener('click', async () => {
+        const value = lines.join('\n');
+        if (!value) { status.textContent = 'Chưa có log để sao chép.'; return; }
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(value);
+          } else {
+            output.focus(); output.select();
+            if (!document.execCommand('copy')) throw new Error('copy unavailable');
+          }
+          status.textContent = 'Đã sao chép ' + lines.length + ' dòng.';
+        } catch (_) {
+          output.focus(); output.select();
+          status.textContent = 'Đã chọn log. Nhấn giữ và chọn Sao chép.';
+        }
+      });
+    })();
+    </script>
+    
+</body>
+</html>

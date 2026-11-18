@@ -1,0 +1,4 @@
+J2ME Cloud Player build
+FreeJ2ME Web commit: c19416e75cbc15f9a27f7e967ee81cb108761e30
+The emulator is provided under its upstream license.
+GCF HTTP(S), TCP client/server and UDP adapters are included; browser and real-game compatibility remain unverified.

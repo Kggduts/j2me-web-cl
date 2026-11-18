@@ -1,15 +1,37 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex">
-  <title>J2ME Cloud Player – đang build</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#10131a">
+  <meta name="description" content="A browser-based Java ME game runtime and compatibility lab.">
+  <title>J2ME Cloud Player</title>
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <main>
-    <h1>J2ME Cloud Player</h1>
-    <p>Đang tạo bản triển khai đầu tiên. GitHub Actions sẽ tự động thay trang này bằng bản emulator sau khi build hoàn tất.</p>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="J2ME Cloud Player home"><span class="brand-mark">J2</span><span>J2ME Cloud Player</span></a>
+      <a class="source-link" href="https://github.com/Kggduts/j2me-cloud-player">Source <span aria-hidden="true">↗</span></a>
+    </header>
+    <section class="hero">
+      <p class="eyebrow">BROWSER-BASED JAVA ME</p>
+      <h1>Your classic mobile games,<br><span>in the browser.</span></h1>
+      <p class="lede">A web runtime for MIDP games, built around the FreeJ2ME emulator. GCF network adapters pass automated JVM tests; browser and real-game verification remain pending.</p>
+      <div class="actions">
+        <a class="primary" href="./emulator/">Launch J2ME player <span aria-hidden="true">→</span></a>
+        <a class="secondary" href="./netprobe/">Network test lab</a>
+      </div>
+    </section>
+    <section class="status-panel" aria-labelledby="status-title">
+      <div class="section-heading"><div><p class="eyebrow">DEVELOPMENT STATUS</p><h2 id="status-title">Compatibility first</h2></div><span class="status-pill">Early development</span></div>
+      <div class="status-grid">
+        <article><span class="status-icon">01</span><h3>Emulator runtime</h3><p>FreeJ2ME Web is pinned and the build overlay adds GCF HTTP(S), TCP client/server and UDP adapters. The pinned source builds successfully in CI; browser verification remains pending.</p><span class="state">Build verified · browser pending</span></article>
+        <article><span class="status-icon">02</span><h3>HTTP / HTTPS</h3><p>GCF adapters use Java URL connections through the browser Fetch path. CORS and browser TLS policies apply.</p><span class="state">Adapter source added</span></article>
+        <article><span class="status-icon">03</span><h3>TCP / UDP</h3><p>GCF socket and datagram adapters use CheerpJ's Tailscale networking path with interactive user sign-in.</p><span class="state">Experimental</span></article>
+      </div>
+    </section>
+    <footer><span>J2ME Cloud Player</span><span>Compatibility claims require repeatable tests.</span></footer>
   </main>
 </body>
 </html>
