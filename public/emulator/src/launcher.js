@@ -599,12 +599,36 @@ async function doExportData() {
 
 function showStartupError(error) {
     const loading = document.getElementById("loading");
+    console.error("J2ME Cloud Player startup failed (raw rejection):", error);
+
+    const safeRead = (object, key) => {
+        try {
+            const value = object == null ? undefined : object[key];
+            return value == null ? "" : (typeof value === "string" ? value : "");
+        } catch (readError) {
+            return "";
+        }
+    };
+
+    const details = [];
+    details.push("Startup failed during: " + (typeof startupStage === "string" ? startupStage : "unknown stage"));
+    details.push("Rejection type: " + (error === null ? "null" : typeof error));
+
+    const stack = safeRead(error, "stack");
+    const message = safeRead(error, "message");
+    if (message) details.push("Message: " + message);
+    if (stack) details.push("Stack:\\n" + stack);
+
+    if (!message && !stack) {
+        try {
+            const json = JSON.stringify(error);
+            if (json && json !== "{}") details.push("Value: " + json);
+        } catch (jsonError) {
+            details.push("Value could not be serialized safely.");
+        }
+    }
+
     if (!loading) return;
-
-    const message = error && (error.stack || error.message)
-        ? (error.stack || error.message)
-        : String(error);
-
     loading.style.display = "block";
     loading.style.whiteSpace = "pre-wrap";
     loading.style.overflow = "auto";
@@ -614,8 +638,6 @@ function showStartupError(error) {
     loading.style.boxSizing = "border-box";
     loading.style.fontSize = "14px";
     loading.style.color = "#8b1e1e";
-    loading.textContent = "J2ME Cloud Player failed to start\\n\\n" + message;
-    console.error("J2ME Cloud Player startup failed:", error);
+    loading.textContent = "J2ME Cloud Player startup error\\n\\n" + details.join("\\n\\n");
 }
-
 main().catch(showStartupError);
