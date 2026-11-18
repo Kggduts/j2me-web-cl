@@ -46,8 +46,20 @@ async function main() {
     setStartupStage("Loading FreeJ2ME Java library");
     lib = await cheerpjRunLibrary(cheerpjWebRoot+"/freej2me-web.jar");
 
-    setStartupStage("Resolving launcher classes");
-    launcherUtil = await lib.pl.zb3.freej2me.launcher.LauncherUtil;
+    setStartupStage("Resolving Java package: pl");
+    const pkgPl = lib.pl;
+
+    setStartupStage("Resolving Java package: pl.zb3");
+    const pkgZb3 = pkgPl.zb3;
+
+    setStartupStage("Resolving Java package: pl.zb3.freej2me");
+    const pkgFreej2me = pkgZb3.freej2me;
+
+    setStartupStage("Resolving Java package: pl.zb3.freej2me.launcher");
+    const pkgLauncher = pkgFreej2me.launcher;
+
+    setStartupStage("Resolving Java class: LauncherUtil");
+    launcherUtil = await pkgLauncher.LauncherUtil;
 
     setStartupStage("Preparing emulator filesystem");
     await launcherUtil.resetTmpDir();
