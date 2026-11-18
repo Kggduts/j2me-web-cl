@@ -12,25 +12,53 @@ let state = {
 };
 let defaultSettings = {};
 
+let startupStageTimer = null;
+
+function setStartupStage(stage) {
+    const loading = document.getElementById("loading");
+    if (loading) loading.textContent = "Loading: " + stage;
+
+    if (startupStageTimer) clearTimeout(startupStageTimer);
+    startupStageTimer = setTimeout(() => {
+        if (!loading || loading.style.display === "none" || loading.hidden) return;
+        loading.style.display = "block";
+        loading.style.whiteSpace = "pre-wrap";
+        loading.style.overflow = "auto";
+        loading.style.alignItems = "flex-start";
+        loading.style.justifyContent = "flex-start";
+        loading.style.padding = "20px";
+        loading.style.boxSizing = "border-box";
+        loading.style.fontSize = "14px";
+        loading.style.color = "#8b1e1e";
+        loading.textContent = "Startup timeout (25 seconds)\\n\\nCurrent stage: " + stage +
+            "\\n\\nThe browser is waiting for this operation. This diagnostic timeout does not prove the exact cause.";
+    }, 25000);
+}
+
 async function main() {
-    document.getElementById("loading").textContent = "Loading CheerpJ...";
+    setStartupStage("CheerpJ runtime initialization");
     await cheerpjInit({
         enableDebug: false
     });
 
+    setStartupStage("Loading FreeJ2ME Java library");
     lib = await cheerpjRunLibrary(cheerpjWebRoot+"/freej2me-web.jar");
 
-    document.getElementById("loading").textContent = "Loading...";
-
+    setStartupStage("Resolving launcher classes");
     launcherUtil = await lib.pl.zb3.freej2me.launcher.LauncherUtil;
 
+    setStartupStage("Preparing emulator filesystem");
     await launcherUtil.resetTmpDir();
 
+    setStartupStage("Reading emulator defaults");
     const Config = await lib.org.recompile.freej2me.Config;
     await javaToKv(Config.DEFAULT_SETTINGS, defaultSettings);
 
+    setStartupStage("Loading installed games");
     await reloadUI();
 
+
+    if (startupStageTimer) clearTimeout(startupStageTimer);
     document.getElementById("loading").style.display = "none";
     document.getElementById("main").style.display = "";
 
