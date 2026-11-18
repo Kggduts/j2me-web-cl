@@ -40,6 +40,25 @@ See [Network compatibility](docs/network-compatibility.md) and [Security model](
 
 The browser Fetch diagnostic is not a GCF or TCP/UDP test. The GCF JVM test is not a browser runtime test.
 
+## Cloudflare Pages deployment
+
+This repository is configured to publish a prebuilt static site for Cloudflare Pages.
+The GitHub Actions **Emulator build** workflow builds the pinned FreeJ2ME Web runtime,
+copies the deployable site into `public/`, and commits that generated output to `main`.
+The workflow ignores commits that change only `public/**`, preventing a build loop.
+
+Configure the connected Cloudflare Pages project once:
+
+- Production branch: `main`
+- Root directory: `/` (repository root)
+- Build command: leave empty
+- Build output directory: `public`
+
+After the first successful GitHub Actions build, Cloudflare Pages detects the generated
+`public/` commit and deploys the site. The initial `public/index.html` is only a
+placeholder until that first build completes. GitHub Actions keeps the reproducible
+Java/Ant build; Cloudflare Pages only hosts the already-built static files.
+
 ## Development
 
 Run static checks:
