@@ -79,7 +79,7 @@ public final class CoreCompatibilityProbe extends MIDlet implements CommandListe
         return true;
     }
 
-    private final class ProbeCanvas extends Canvas implements CommandListener {
+    private final class ProbeCanvas extends Canvas {
         private String status = "Tap Test RMS. Press any key to test input.";
         private int keyCount;
         private int pointerCount;
