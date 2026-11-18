@@ -662,10 +662,37 @@ async function showStartupError(error) {
             details.push("Own properties: unavailable");
         }
 
-        for (const key of ["getMessage", "getLocalizedMessage", "getCause", "getClass"]) {
+        for (const key of ["getMessage", "getLocalizedMessage", "toString"]) {
             const value = await safeMethod(error, key);
-            if (value) details.push(key + ": " + value);
+            if (value) details.push(key + "(): " + value);
         }
+
+        const inspectJavaObject = async (object, prefix) => {
+            if (!object) return;
+            const javaClass = await safeReadMethodObject(object, "getClass");
+            if (javaClass) {
+                const className = await safeMethod(javaClass, "getName");
+                const classText = await safeMethod(javaClass, "toString");
+                if (className) details.push(prefix + " Java type: " + className);
+                else if (classText) details.push(prefix + " Java type: " + classText);
+            }
+            const cause = await safeReadMethodObject(object, "getCause");
+            if (cause && cause !== object) {
+                const causeMessage = await safeMethod(cause, "getMessage");
+                details.push(prefix + " cause type: " + (await safeMethod(await safeReadMethodObject(cause, "getClass"), "getName")) || "unknown");
+                if (causeMessage) details.push(prefix + " cause message: " + causeMessage);
+            }
+        };
+        const safeReadMethodObject = async (object, methodName) => {
+            try {
+                const method = safeRead(object, methodName);
+                if (typeof method === "function") return await method.call(object);
+            } catch (methodError) {
+                console.warn("Could not inspect Java exception:", methodName, methodError);
+            }
+            return null;
+        };
+        await inspectJavaObject(error, "Rejection");
 
         if (!message && !stack) {
             try {
