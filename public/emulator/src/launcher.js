@@ -12,67 +12,25 @@ let state = {
 };
 let defaultSettings = {};
 
-let startupStageTimer = null;
-let startupStage = "initializing";
-
-function setStartupStage(stage) {
-    startupStage = stage;
-    const loading = document.getElementById("loading");
-    if (loading) loading.textContent = "Loading: " + stage;
-
-    if (startupStageTimer) clearTimeout(startupStageTimer);
-    startupStageTimer = setTimeout(() => {
-        if (!loading || loading.style.display === "none" || loading.hidden) return;
-        loading.style.display = "block";
-        loading.style.whiteSpace = "pre-wrap";
-        loading.style.overflow = "auto";
-        loading.style.alignItems = "flex-start";
-        loading.style.justifyContent = "flex-start";
-        loading.style.padding = "20px";
-        loading.style.boxSizing = "border-box";
-        loading.style.fontSize = "14px";
-        loading.style.color = "#8b1e1e";
-        loading.textContent = "Startup timeout (25 seconds)\\n\\nCurrent stage: " + stage +
-            "\\n\\nThe browser is waiting for this operation. This diagnostic timeout does not prove the exact cause.";
-    }, 25000);
-}
-
 async function main() {
-    setStartupStage("CheerpJ runtime initialization");
+    document.getElementById("loading").textContent = "Loading CheerpJ...";
     await cheerpjInit({
         enableDebug: false
     });
 
-    setStartupStage("Loading FreeJ2ME Java library");
     lib = await cheerpjRunLibrary(cheerpjWebRoot+"/freej2me-web.jar");
 
-    setStartupStage("Resolving Java package: pl");
-    const pkgPl = lib.pl;
+    document.getElementById("loading").textContent = "Loading...";
 
-    setStartupStage("Resolving Java package: pl.zb3");
-    const pkgZb3 = pkgPl.zb3;
+    launcherUtil = await lib.pl.zb3.freej2me.launcher.LauncherUtil;
 
-    setStartupStage("Resolving Java package: pl.zb3.freej2me");
-    const pkgFreej2me = pkgZb3.freej2me;
-
-    setStartupStage("Resolving Java package: pl.zb3.freej2me.launcher");
-    const pkgLauncher = pkgFreej2me.launcher;
-
-    setStartupStage("Resolving Java class: LauncherUtil");
-    launcherUtil = await pkgLauncher.LauncherUtil;
-
-    setStartupStage("Preparing emulator filesystem");
     await launcherUtil.resetTmpDir();
 
-    setStartupStage("Reading emulator defaults");
     const Config = await lib.org.recompile.freej2me.Config;
     await javaToKv(Config.DEFAULT_SETTINGS, defaultSettings);
 
-    setStartupStage("Loading installed games");
     await reloadUI();
 
-
-    if (startupStageTimer) clearTimeout(startupStageTimer);
     document.getElementById("loading").style.display = "none";
     document.getElementById("main").style.display = "";
 
@@ -611,109 +569,4 @@ async function doExportData() {
     }
 }
 
-async function showStartupError(error) {
-    const loading = document.getElementById("loading");
-    console.error("J2ME Cloud Player startup failed (raw rejection):", error);
-
-    const details = [];
-    const safeString = (value) => {
-        try {
-            return typeof value === "string" ? value : "";
-        } catch (readError) {
-            return "";
-        }
-    };
-    const safeRead = (object, key) => {
-        try {
-            return object == null ? undefined : object[key];
-        } catch (readError) {
-            return undefined;
-        }
-    };
-    const safeMethod = async (object, methodName) => {
-        try {
-            const method = safeRead(object, methodName);
-            if (typeof method !== "function") return "";
-            const result = await method.call(object);
-            if (typeof result === "string" || typeof result === "number" || typeof result === "boolean") {
-                return String(result);
-            }
-        } catch (methodError) {
-            console.warn("Could not read Java rejection method:", methodName, methodError);
-        }
-        return "";
-    };
-
-    details.push("Startup failed during: " + (typeof startupStage === "string" ? startupStage : "unknown stage"));
-    details.push("Rejection type: " + (error === null ? "null" : typeof error));
-
-    const message = safeString(safeRead(error, "message"));
-    const stack = safeString(safeRead(error, "stack"));
-    const name = safeString(safeRead(error, "name"));
-    if (name) details.push("Name: " + name);
-    if (message) details.push("Message: " + message);
-    if (stack) details.push("Stack:\\n" + stack);
-
-    if (error && typeof error === "object") {
-        try {
-            const keys = Object.getOwnPropertyNames(error);
-            if (keys.length) details.push("Own properties: " + keys.join(", "));
-        } catch (inspectError) {
-            details.push("Own properties: unavailable");
-        }
-
-        for (const key of ["getMessage", "getLocalizedMessage", "toString"]) {
-            const value = await safeMethod(error, key);
-            if (value) details.push(key + "(): " + value);
-        }
-
-        const inspectJavaObject = async (object, prefix) => {
-            if (!object) return;
-            const javaClass = await safeReadMethodObject(object, "getClass");
-            if (javaClass) {
-                const className = await safeMethod(javaClass, "getName");
-                const classText = await safeMethod(javaClass, "toString");
-                if (className) details.push(prefix + " Java type: " + className);
-                else if (classText) details.push(prefix + " Java type: " + classText);
-            }
-            const cause = await safeReadMethodObject(object, "getCause");
-            if (cause && cause !== object) {
-                const causeMessage = await safeMethod(cause, "getMessage");
-                details.push(prefix + " cause type: " + (await safeMethod(await safeReadMethodObject(cause, "getClass"), "getName")) || "unknown");
-                if (causeMessage) details.push(prefix + " cause message: " + causeMessage);
-            }
-        };
-        const safeReadMethodObject = async (object, methodName) => {
-            try {
-                const method = safeRead(object, methodName);
-                if (typeof method === "function") return await method.call(object);
-            } catch (methodError) {
-                console.warn("Could not inspect Java exception:", methodName, methodError);
-            }
-            return null;
-        };
-        await inspectJavaObject(error, "Rejection");
-
-        if (!message && !stack) {
-            try {
-                const json = JSON.stringify(error);
-                if (json && json !== "{}") details.push("Value: " + json);
-            } catch (jsonError) {
-                details.push("Value: object could not be serialized");
-            }
-        }
-    }
-
-    if (!loading) return;
-    loading.style.display = "block";
-    loading.style.whiteSpace = "pre-wrap";
-    loading.style.overflow = "auto";
-    loading.style.alignItems = "flex-start";
-    loading.style.justifyContent = "flex-start";
-    loading.style.padding = "20px";
-    loading.style.boxSizing = "border-box";
-    loading.style.fontSize = "14px";
-    loading.style.color = "#8b1e1e";
-    loading.textContent = "J2ME Cloud Player startup error\\n\\n" + details.join("\\n\\n");
-}
-main().catch(showStartupError);
+main();
