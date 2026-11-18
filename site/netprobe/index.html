@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#10131a">
+  <title>Network Test Lab · J2ME Cloud Player</title>
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="./netprobe.css">
+  <script src="./netprobe.js" defer></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar"><a class="brand" href="../"><span class="brand-mark">J2</span><span>J2ME Cloud Player</span></a><a class="source-link" href="https://github.com/Kggduts/j2me-cloud-player">Source ↗</a></header>
+    <section class="probe-head"><p class="eyebrow">DIAGNOSTICS / PHASE 01</p><h1>Network test lab</h1><p class="lede">Check browser HTTP(S) behavior from this page. These checks do not prove that Java ME Connector APIs work, and they do not test raw TCP or UDP.</p></section>
+    <section class="probe-card">
+      <label for="target">HTTP(S) endpoint</label>
+      <input id="target" type="url" placeholder="https://example.com/health" autocomplete="url" spellcheck="false">
+      <div class="controls"><select id="method" aria-label="HTTP method"><option>GET</option><option>HEAD</option></select><button id="run" type="button">Run request</button></div>
+      <p class="hint">Only submit endpoints you trust. Cross-origin requests may fail unless the server permits this page through CORS.</p>
+    </section>
+    <section class="results" aria-live="polite">
+      <div class="result-head"><h2>Result</h2><span id="status" class="status-pill">Not run</span></div>
+      <dl><div><dt>Final URL</dt><dd id="final-url">—</dd></div><div><dt>HTTP status</dt><dd id="http-status">—</dd></div><div><dt>Duration</dt><dd id="duration">—</dd></div><div><dt>Content type</dt><dd id="content-type">—</dd></div><div><dt>Response bytes</dt><dd id="bytes">—</dd></div></dl>
+      <pre id="details">No request has been made.</pre>
+    </section>
+    <section class="limits"><h2>Java ME GCF diagnostic</h2><p>The emulator build also packages a MIDlet that exercises the actual <code>javax.microedition.io</code> Connector API. <a href="../netprobe-midlet.jar">Get the GCF network probe MIDlet</a> and run it in the emulator. The project build overlays HTTP(S), TCP and UDP GCF adapters on the pinned upstream source. Use the MIDlet to exercise those APIs; the browser/Tailscale path remains experimental until verified.</p></section>
+    <section class="limits"><h2>What this browser test can and cannot tell you</h2><ul><li>It tests a browser fetch request initiated by this page.</li><li>A CORS error means the browser did not expose the response to this page; it does not prove the remote server is offline.</li><li>It does not test Java blocking stream semantics, MIDP GCF, TCP sockets, UDP datagrams, or CheerpJ networking.</li><li>Do not enter private credentials, auth keys, or sensitive URLs.</li></ul></section>
+    <footer><span>J2ME Cloud Player</span><a href="../">Back to project overview</a></footer>
+  </main>
+</body>
+</html>

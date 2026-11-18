@@ -1,0 +1,72 @@
+name: Emulator build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: emulator-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build FreeJ2ME Web
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out project
+        uses: actions/checkout@v4
+
+      - name: Check out pinned upstream
+        uses: actions/checkout@v4
+        with:
+          repository: zb3/freej2me-web
+          ref: c19416e75cbc15f9a27f7e967ee81cb108761e30
+          path: vendor/freej2me-web
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Verify Ant
+        run: |
+          if ! command -v ant >/dev/null 2>&1; then sudo apt-get install -y ant; fi
+          ant -version
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run network probe server tests
+        run: python -m unittest discover -s tools -p 'test_*.py' -v
+
+      - name: Run Java SE network probe tests
+        run: bash tools/run-java-probe-tests.sh
+
+      - name: Run static checks
+        run: bash scripts/check-project.sh
+
+      - name: Build emulator and assemble site
+        run: bash scripts/build-emulator.sh
+
+      - name: Upload deployable site
+        uses: actions/upload-artifact@v4
+        with:
+          name: j2me-cloud-player-site
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14

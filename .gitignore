@@ -1,0 +1,33 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Java build outputs
+build/
+dist/
+out/
+*.class
+*.jar
+*.war
+
+# Node tooling
+node_modules/
+.npm/
+*.log
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+
+# Test artifacts
+test-results/
+playwright-report/
+coverage/
