@@ -611,34 +611,69 @@ async function doExportData() {
     }
 }
 
-function showStartupError(error) {
+async function showStartupError(error) {
     const loading = document.getElementById("loading");
     console.error("J2ME Cloud Player startup failed (raw rejection):", error);
 
-    const safeRead = (object, key) => {
+    const details = [];
+    const safeString = (value) => {
         try {
-            const value = object == null ? undefined : object[key];
-            return value == null ? "" : (typeof value === "string" ? value : "");
+            return typeof value === "string" ? value : "";
         } catch (readError) {
             return "";
         }
     };
+    const safeRead = (object, key) => {
+        try {
+            return object == null ? undefined : object[key];
+        } catch (readError) {
+            return undefined;
+        }
+    };
+    const safeMethod = async (object, methodName) => {
+        try {
+            const method = safeRead(object, methodName);
+            if (typeof method !== "function") return "";
+            const result = await method.call(object);
+            if (typeof result === "string" || typeof result === "number" || typeof result === "boolean") {
+                return String(result);
+            }
+        } catch (methodError) {
+            console.warn("Could not read Java rejection method:", methodName, methodError);
+        }
+        return "";
+    };
 
-    const details = [];
     details.push("Startup failed during: " + (typeof startupStage === "string" ? startupStage : "unknown stage"));
     details.push("Rejection type: " + (error === null ? "null" : typeof error));
 
-    const stack = safeRead(error, "stack");
-    const message = safeRead(error, "message");
+    const message = safeString(safeRead(error, "message"));
+    const stack = safeString(safeRead(error, "stack"));
+    const name = safeString(safeRead(error, "name"));
+    if (name) details.push("Name: " + name);
     if (message) details.push("Message: " + message);
     if (stack) details.push("Stack:\\n" + stack);
 
-    if (!message && !stack) {
+    if (error && typeof error === "object") {
         try {
-            const json = JSON.stringify(error);
-            if (json && json !== "{}") details.push("Value: " + json);
-        } catch (jsonError) {
-            details.push("Value could not be serialized safely.");
+            const keys = Object.getOwnPropertyNames(error);
+            if (keys.length) details.push("Own properties: " + keys.join(", "));
+        } catch (inspectError) {
+            details.push("Own properties: unavailable");
+        }
+
+        for (const key of ["getMessage", "getLocalizedMessage", "getCause", "getClass"]) {
+            const value = await safeMethod(error, key);
+            if (value) details.push(key + ": " + value);
+        }
+
+        if (!message && !stack) {
+            try {
+                const json = JSON.stringify(error);
+                if (json && json !== "{}") details.push("Value: " + json);
+            } catch (jsonError) {
+                details.push("Value: object could not be serialized");
+            }
         }
     }
 
