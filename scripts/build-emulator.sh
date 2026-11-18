@@ -45,7 +45,9 @@ bash "$ROOT/tools/run-gcf-adapter-tests.sh" "$UPSTREAM/web/freej2me-web.jar"
 PROBE_CLASSES="$(mktemp -d)"
 trap 'rm -rf "$PROBE_CLASSES"' EXIT
 javac -source 8 -target 8 -classpath "$UPSTREAM/web/freej2me-web.jar" \
-  -d "$PROBE_CLASSES" "$ROOT/tools/java-me-probe/GcfNetworkProbe.java"
+  -d "$PROBE_CLASSES" \
+  "$ROOT/tools/java-me-probe/GcfNetworkProbe.java" \
+  "$ROOT/tools/java-me-probe/CoreCompatibilityProbe.java"
 
 rm -rf "$ROOT/dist"
 mkdir -p "$ROOT/dist"
